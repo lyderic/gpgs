@@ -3,8 +3,6 @@ package cmd
 import (
 	"fmt"
 	. "gpgs/internal"
-	"regexp"
-	"strings"
 
 	"github.com/bitfield/script"
 	"github.com/spf13/cobra"
@@ -30,11 +28,9 @@ func list() {
 }
 
 func listUids() {
-	pipe := script.Exec("gpg --list-keys --with-colons").MatchRegexp(regexp.MustCompile("^uid"))
-	pipe.EachLine(func(line string, output *strings.Builder) {
-		fullUid := strings.Split(line, ":")[9]
-		fmt.Printf("%s\n", strings.Fields(fullUid)[0])
-	})
+	for _, uid := range GetUids() {
+		fmt.Println(">", uid)
+	}
 }
 
 func listKeys(keytype string) {

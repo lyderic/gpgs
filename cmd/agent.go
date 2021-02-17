@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	. "gpgs/internal"
@@ -43,11 +45,23 @@ func agentStatus() {
 		bits := strings.Fields(line)
 		grip := bits[2]
 		status := bits[6]
-		Magenta("%s %s\n", grip, status)
+		if status == "1" {
+			Magenta("%s %s\n", grip, status)
+		} else {
+			fmt.Printf("%s %s\n", grip, status)
+		}
 	}
-	for _, uid := range []string{"passs", "flipouk"} {
+	for _, uid := range GetUids() {
 		Yellow("--- %s ---\n", uid)
-		script.Exec("gpg --list-secret-keys --with-keygrip --with-colons " + uid).Stdout()
+		command := "gpg --list-secret-keys --with-keygrip --with-colons " + uid
+		output := script.Exec(command).MatchRegexp(regexp.MustCompile("^grp"))
+		var fingerprints []string
+		output.EachLine(func(line string, out *strings.Builder) {
+			fingerprints = append(fingerprints, strings.Split(line, ":")[9])
+		})
+		for _, fingerprint := range fingerprints {
+			Cyan("%s\n", fingerprint)
+		}
 	}
 }
 
