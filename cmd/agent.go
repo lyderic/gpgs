@@ -1,7 +1,9 @@
 package cmd
 
 import (
-	"fmt"
+	"strings"
+
+	. "gpgs/internal"
 
 	"github.com/bitfield/script"
 	"github.com/spf13/cobra"
@@ -19,8 +21,7 @@ var agentCmd = &cobra.Command{
 func agent() {
 	if viper.GetBool("kill") {
 		killAgent()
-	}
-	if viper.GetBool("status") {
+	} else {
 		agentStatus()
 	}
 }
@@ -30,13 +31,28 @@ func killAgent() {
 }
 
 func agentStatus() {
-	fmt.Println("agentStatus called")
+	keyinfo := script.Exec(`gpg-connect-agent "keyinfo --list" /bye`)
+	var lines []string
+	keyinfo.EachLine(func(line string, output *strings.Builder) {
+		lines = append(lines, line)
+	})
+	for _, line := range lines {
+		if !strings.HasPrefix(line, "S KEYINFO") {
+			continue
+		}
+		bits := strings.Fields(line)
+		grip := bits[2]
+		status := bits[6]
+		Magenta("%s %s\n", grip, status)
+	}
+	for _, uid := range []string{"passs", "flipouk"} {
+		Yellow("--- %s ---\n", uid)
+		script.Exec("gpg --list-secret-keys --with-keygrip --with-colons " + uid).Stdout()
+	}
 }
 
 func init() {
 	rootCmd.AddCommand(agentCmd)
-	agentCmd.PersistentFlags().BoolP("status", "s", false, "show status of gpg agent")
-	viper.BindPFlag("status", agentCmd.PersistentFlags().Lookup("status"))
 	agentCmd.PersistentFlags().BoolP("kill", "k", false, "kill gpg agent")
 	viper.BindPFlag("kill", agentCmd.PersistentFlags().Lookup("kill"))
 }
