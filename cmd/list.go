@@ -37,7 +37,7 @@ func listUids() {
 
 func listKeys(keytype string) {
 	Blue("[%s keys] ", keytype)
-	command := fmt.Sprintf("gpg --list-%s-keys", keytype)
+	command := fmt.Sprintf("gpg --list-%s-keys --keyid-format LONG", keytype)
 	script.Exec(command).Reject(viper.GetString("keyring")).Stdout()
 }
 
