@@ -28,8 +28,10 @@ func list() {
 }
 
 func listUids() {
+	fmt.Println("Keys in keyring:")
 	for _, uid := range GetUids() {
-		fmt.Println(">", uid)
+		Green(" • ")
+		fmt.Println(uid)
 	}
 }
 

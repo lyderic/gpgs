@@ -1,10 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"regexp"
-	"strings"
-
 	. "gpgs/internal"
 
 	"github.com/bitfield/script"
@@ -33,34 +29,15 @@ func killAgent() {
 }
 
 func agentStatus() {
-	keyinfo := script.Exec(`gpg-connect-agent "keyinfo --list" /bye`)
-	var lines []string
-	keyinfo.EachLine(func(line string, output *strings.Builder) {
-		lines = append(lines, line)
-	})
-	for _, line := range lines {
-		if !strings.HasPrefix(line, "S KEYINFO") {
-			continue
-		}
-		bits := strings.Fields(line)
-		grip := bits[2]
-		status := bits[6]
-		if status == "1" {
-			Magenta("%s %s\n", grip, status)
-		} else {
-			fmt.Printf("%s %s\n", grip, status)
-		}
-	}
-	for _, uid := range GetUids() {
-		Yellow("--- %s ---\n", uid)
-		command := "gpg --list-secret-keys --with-keygrip --with-colons " + uid
-		output := script.Exec(command).MatchRegexp(regexp.MustCompile("^grp"))
-		var fingerprints []string
-		output.EachLine(func(line string, out *strings.Builder) {
-			fingerprints = append(fingerprints, strings.Split(line, ":")[9])
-		})
-		for _, fingerprint := range fingerprints {
-			Cyan("%s\n", fingerprint)
+	for _, keyinfo := range GetKeyinfos() {
+		if keyinfo.Status == "1" {
+			for _, uid := range GetUids() {
+				for _, grip := range GetGrips(uid) {
+					if keyinfo.Grip == grip {
+						Green("Key Loaded: %s\n", uid)
+					}
+				}
+			}
 		}
 	}
 }
