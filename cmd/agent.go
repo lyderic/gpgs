@@ -29,16 +29,21 @@ func killAgent() {
 }
 
 func agentStatus() {
+	var loadedKeys []string
 	for _, keyinfo := range GetKeyinfos() {
 		if keyinfo.Status == "1" {
 			for _, uid := range GetUids() {
 				for _, grip := range GetGrips(uid) {
 					if keyinfo.Grip == grip {
 						Green("Key Loaded: %s\n", uid)
+						loadedKeys = append(loadedKeys, uid)
 					}
 				}
 			}
 		}
+	}
+	if len(loadedKeys) == 0 {
+		Red("No key loaded!\n")
 	}
 }
 
